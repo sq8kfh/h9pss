@@ -1,9 +1,12 @@
 /*
- * h9-eu1.c
+ * h9pss
+ * Power supply switch
  *
- * Created: 2017-09-07 19:07:15
- * Author : SQ8KFH
- */ 
+ * Created by SQ8KFH on 2017-09-07.
+ *
+ * Copyright (C) 2017-2020 Kamil Palkowski. All rights reserved.
+ */
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/cpufunc.h> 
@@ -14,13 +17,11 @@
 volatile uint8_t output1 = 0;
 volatile uint8_t output2 = 0;
 	
-#define LED_DDR DDRB
-#define LED_PORT PORTB
-#define LED_PIN PB1
+#define LED_DDR DDRD
+#define LED_PORT PORTD
+#define LED_PIN PD0
 
-void
-set_output(uint8_t o1, uint8_t o2)
-{
+void set_output(uint8_t o1, uint8_t o2) {
 	if (o1) {
 		PORTB |= _BV(PB5);
 		output1 = 1;
@@ -37,104 +38,9 @@ set_output(uint8_t o1, uint8_t o2)
 		PORTB &= ~_BV(PB6);
 		output2 = 0;
 	}
-		
-	/*switch (o) {
-		case 1:
-			PORTC |= _BV(PC7);
-			PORTB &= ~_BV(PB5);
-			PORTB &= ~_BV(PB6);
-			PORTB &= ~_BV(PB7);
-			PORTD &= ~_BV(PD0);
-			PORTC &= ~_BV(PC0);
-			PORTD &= ~_BV(PD1);
-			PORTC &= ~_BV(PC1);
-			break;
-		case 2:
-			PORTB |= _BV(PB5);
-			PORTC &= ~_BV(PC7);
-			PORTB &= ~_BV(PB6);
-			PORTB &= ~_BV(PB7);
-			PORTD &= ~_BV(PD0);
-			PORTC &= ~_BV(PC0);
-			PORTD &= ~_BV(PD1);
-			PORTC &= ~_BV(PC1);
-			break;
-		case 3:
-			PORTB |= _BV(PB6);
-			PORTC &= ~_BV(PC7);
-			PORTB &= ~_BV(PB5);
-			PORTB &= ~_BV(PB7);
-			PORTD &= ~_BV(PD0);
-			PORTC &= ~_BV(PC0);
-			PORTD &= ~_BV(PD1);
-			PORTC &= ~_BV(PC1);
-			break;
-		case 4:
-			PORTB |= _BV(PB7);
-			PORTC &= ~_BV(PC7);
-			PORTB &= ~_BV(PB5);
-			PORTB &= ~_BV(PB6);
-			PORTD &= ~_BV(PD0);
-			PORTC &= ~_BV(PC0);
-			PORTD &= ~_BV(PD1);
-			PORTC &= ~_BV(PC1);
-			break;
-		case 5:
-			PORTD |= _BV(PD0);
-			PORTC &= ~_BV(PC7);
-			PORTB &= ~_BV(PB5);
-			PORTB &= ~_BV(PB6);
-			PORTB &= ~_BV(PB7);
-			PORTC &= ~_BV(PC0);
-			PORTD &= ~_BV(PD1);
-			PORTC &= ~_BV(PC1);
-			break;
-		case 6:
-			PORTC |= _BV(PC0);
-			PORTC &= ~_BV(PC7);
-			PORTB &= ~_BV(PB5);
-			PORTB &= ~_BV(PB6);
-			PORTB &= ~_BV(PB7);
-			PORTD &= ~_BV(PD0);
-			PORTD &= ~_BV(PD1);
-			PORTC &= ~_BV(PC1);
-			break;
-		case 7:
-			PORTD |= _BV(PD1);
-			PORTC &= ~_BV(PC7);
-			PORTB &= ~_BV(PB5);
-			PORTB &= ~_BV(PB6);
-			PORTB &= ~_BV(PB7);
-			PORTD &= ~_BV(PD0);
-			PORTC &= ~_BV(PC0);
-			PORTC &= ~_BV(PC1);
-			break;
-		case 8:
-			PORTC |= _BV(PC1);
-			PORTC &= ~_BV(PC7);
-			PORTB &= ~_BV(PB5);
-			PORTB &= ~_BV(PB6);
-			PORTB &= ~_BV(PB7);
-			PORTD &= ~_BV(PD0);
-			PORTC &= ~_BV(PC0);
-			PORTD &= ~_BV(PD1);
-			break;
-		default:
-			PORTC &= ~_BV(PC7);
-			PORTB &= ~_BV(PB5);
-			PORTB &= ~_BV(PB6);
-			PORTB &= ~_BV(PB7);
-			PORTD &= ~_BV(PD0);
-			PORTC &= ~_BV(PC0);
-			PORTD &= ~_BV(PD1);
-			PORTC &= ~_BV(PC1);
-			return 0;
-	}
-	return o;*/
 }
 
-int main(void)
-{
+int main(void) {
 	DDRB = 0xff;
 	DDRC = 0xff ^ ((1 << PC6) | (1 << PC5) | (1 << PC4)); //ADC
 	DDRD = 0xff;
@@ -170,7 +76,7 @@ int main(void)
 		if (CAN_get_msg(&cm)) {
 			LED_PORT |= (1<<LED_PIN);
 			led_counter = 0x10000;
-			if (cm.type == H9_TYPE_GET_REG) {
+			if (cm.type == H9MSG_TYPE_GET_REG) {
 				h9msg_t cm_res;
 				CAN_init_response_msg(&cm, &cm_res);
 				cm_res.dlc = 2;
@@ -229,9 +135,14 @@ int main(void)
                         cm_res.data[2] = (uint8_t)(tmp & 0xff);
                         CAN_put_msg(&cm_res);
                         break;
+                    default:
+                        cm_res.type = H9MSG_TYPE_ERROR;
+                        cm_res.data[0] = H9MSG_ERROR_INVALID_REGISTER;
+                        cm_res.dlc = 1;
+                        CAN_put_msg(&cm_res);
 				}
 			}
-			else if (cm.type == H9_TYPE_SET_REG) {
+			else if (cm.type == H9MSG_TYPE_SET_REG) {
 				h9msg_t cm_res;
 				CAN_init_response_msg(&cm, &cm_res);
 				cm_res.dlc = 0;
@@ -257,10 +168,13 @@ int main(void)
 						cm_res.dlc = 2;
 						CAN_put_msg(&cm_res);
 						break;
+                    default:
+                        cm_res.type = H9MSG_TYPE_ERROR;
+                        cm_res.data[0] = H9MSG_ERROR_INVALID_REGISTER;
+                        cm_res.dlc = 1;
+                        CAN_put_msg(&cm_res);
 				}
 			}
 		}
 	}
-	return 0;
 }
-
