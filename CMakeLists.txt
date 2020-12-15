@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(h9pss VERSION 0.2)
+project(h9pss VERSION 0.3)
 set(NODE_TYPE 4)
 set(MMCU atmega32m1)
 set(FREQ 16000000)
