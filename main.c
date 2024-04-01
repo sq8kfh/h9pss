@@ -48,13 +48,13 @@ void set_output(uint8_t o1, uint8_t o2) {
 int main(void) {
 	DDRB = 0xff ^ (1 << BUTTON_PIN); //button
 	DDRC = 0xff;// ^ ((1 << PC6) | (1 << PC5) | (1 << PC4)); //ADC
-	DDRD = 0xff;// ^ ((1 << PD5) | (1 << PD6));
+	DDRD = 0xff ^ ((1 << PD5) | (1 << PD6)); //digital I
 	DDRE = 0xff;
 
     BUTTON_DDR &= ~(1 << BUTTON_PIN);
-
     BUTTON_PORT |= (1 << BUTTON_PIN);
-    PORTD &= ~((1 << PD5) | (1 << PD6));
+    
+    PORTD |= ((1 << PD5) | (1 << PD6));
 
 //	ADMUX = (1 << MUX3) | (1 << MUX1);
 //	ADCSRA = (1 << ADEN) | (1<<ADPS0) | (1<<ADPS1) | (1<<ADPS2);
