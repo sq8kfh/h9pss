@@ -1,7 +1,10 @@
 # Changelog
 
 ## 0.3
-### Changed
+- Fix output level
+- Add button support
+- Add build infomration
+- New CMakeFile
 - Upgrade h9avr-can version to 0.3.
 
 ## 0.2

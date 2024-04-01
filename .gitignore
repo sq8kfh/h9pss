@@ -9,6 +9,7 @@
 .vs/
 
 config.h
+build_information_gen.h
 
 # CMake
 cmake-build-debug/

@@ -1,6 +1,19 @@
 cmake_minimum_required(VERSION 3.10)
+include(CMakeDependentOption)
 
-project(h9pss VERSION 0.3)
+find_program(AVR_C_COMPILER avr-gcc REQUIRED)
+find_program(AVR_CXX_COMPILER avr-g++ REQUIRED)
+find_program(AVR_OBJCOPY avr-objcopy REQUIRED)
+find_program(AVR_SIZE avr-size REQUIRED)
+find_program(AVRDUDE avrdude)
+find_program(SREC_CAT srec_cat REQUIRED)
+
+set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_PROCESSOR avr)
+set(CMAKE_C_COMPILER ${AVR_C_COMPILER})
+set(CMAKE_CXX_COMPILER ${AVR_CXX_COMPILER})
+
+project(h9pss VERSION 0.3.0)
 set(NODE_TYPE 4)
 set(MMCU atmega32m1)
 set(FREQ 16000000)
@@ -32,16 +45,6 @@ function(add_additional_clean_file FILENAME)
 
     set_source_files_properties(${FILENAME} PROPERTIES GENERATED TRUE)
 endfunction(add_additional_clean_file)
-
-find_program(AVR_C_COMPILER avr-gcc PATHS ${PATHS})
-find_program(AVR_OBJCOPY avr-objcopy PATHS ${PATHS})
-find_program(AVR_SIZE avr-size PATHS ${PATHS})
-find_program(AVRDUDE avrdude PATHS ${PATHS})
-find_program(SREC_CAT srec_cat PATHS ${PATHS})
-
-set(CMAKE_SYSTEM_NAME Generic)
-set(CMAKE_SYSTEM_PROCESSOR avr)
-set(CMAKE_C_COMPILER ${AVR_C_COMPILER})
 
 if(NOT BUILD_DIRECTORY)
     set(BUILD_DIRECTORY /build CACHE STRING "Setting build directory to /build")
@@ -90,6 +93,19 @@ if(BOOTSTART)
     add_additional_clean_file(${HEX_WITH_BL_FILE})
 endif(BOOTSTART)
 
+add_custom_command(
+        OUTPUT build_information_gen.h
+        COMMAND sh build_information.sh > build_information_gen.h
+        DEPENDS ${SOURCE_FILES}
+)
+
+add_custom_target(
+        build_information
+        DEPENDS build_information_gen.h
+)
+
+add_dependencies(${PROJECT_NAME} build_information)
+
 set_target_properties(
         ${PROJECT_NAME}
         PROPERTIES
@@ -103,7 +119,7 @@ add_custom_command(
         POST_BUILD
         COMMAND ${AVR_OBJCOPY} -O ihex -R .eeprom ${ELF_FILE} ${HEX_FILE}
         COMMAND ${AVR_OBJCOPY} -O ihex -j .eeprom --set-section-flags=.eeprom="alloc,load" --change-section-lma .eeprom=0 ${ELF_FILE} ${EEP_FILE}
-        COMMAND ${AVR_SIZE} ${ELF_FILE} --mcu=${MMCU} --format=avr
+        COMMAND ${AVR_SIZE} ${ELF_FILE} --format=gnu
         COMMENT "Post processsing"
 )
 
